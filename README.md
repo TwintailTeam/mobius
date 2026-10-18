@@ -1,6 +1,6 @@
 # mobius
 
-Manifest generator for [TwintailLauncher](https://github.com/TwintailTeam). It calls a game
+Manifest generator for [TwintailLauncher](https://github.com/TwintailTeam/TwintailLauncher). It calls a game
 launcher's own API, takes out what the launcher needs to install and patch the game, and
 writes it as a zstd compressed protobuf manifest (`.ttm`) plus the `repository.json` index
 the launcher reads.
