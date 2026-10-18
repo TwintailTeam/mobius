@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+option java_package = "app.twintaillauncher.mobius.proto";
+option java_outer_classname = "RunnerManifestProto";
+option java_multiple_files = true;
+
+message RunnerManifest {
+  string id = 1;
+  string display_name = 2;
+  RunnerMaintainerInfo maintainer_info = 3;
+  bool aarch64_supported = 4;
+  repeated RunnerEntry version_list = 5;
+  RunnerPathInfo paths = 6;
+  RunnerFeatureFlags feature_flags = 7;
+  repeated string feature_blacklist = 8;
+}
+
+message RunnerEntry {
+  string name = 1;
+  RunnerEntrySource x86_64 = 2;
+  RunnerEntrySource aarch64 = 3;
+}
+
+message RunnerEntrySource {
+  string archive_url = 1;
+  string validation_file_url = 2;
+  string archive_hash = 3;
+  string validation_file_hash = 4;
+  string archive_size = 5;
+  string validation_file_size = 6;
+}
+
+message RunnerMaintainerInfo {
+  string name = 1;
+  string source_url = 2;
+  string website_url = 3;
+  string community_url = 4;
+}
+
+message RunnerPathInfo {
+  string main_binary = 1;
+  string tool_manifest_file = 2;
+  string compatibility_tool_file = 3;
+  string version_file = 4;
+  string tracked_files_file = 5;
+}
+
+message RunnerFeatureFlags {
+  optional bool optiscaler = 1;
+  optional bool hdr = 2;
+  optional bool low_latency_layer = 3;
+  optional bool local_shader_cache = 4;
+  optional bool wine_wayland = 5;
+  optional bool dlss_upgrade = 6;
+  optional bool fsr4_upgrade = 7;
+  optional bool mlfg_upgrade = 8;
+  optional bool dxvk_lowlatency = 9;
+  optional bool dxvk_sarek = 10;
+  optional bool xess_upgrade = 11;
+  optional bool ffx3_upgrade = 12;
+  optional bool ffx4_upgrade = 13;
+  optional bool fsr4_rdna3_upgrade = 14;
+  optional bool x11_exclusive = 15;
+  optional bool wine_fullscreen_fsr = 16;
+  optional bool wayland_primary_monitor = 17;
+  optional bool wayland_cursor_scale = 18;
+  optional bool wayland_window_slicing = 19;
+  optional bool optiscaler_config = 20;
+  optional bool optiscaler_dll_name = 21;
+  optional bool fsr3_upgrade = 22;
+}

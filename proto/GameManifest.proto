@@ -1,0 +1,337 @@
+syntax = "proto3";
+
+option java_package = "app.twintaillauncher.mobius.proto";
+option java_outer_classname = "GameManifestProto";
+option java_multiple_files = true;
+
+enum GameStatusInfo {
+  GAME_STATUS_UNKNOWN = 0;
+  GAME_STATUS_AVAILABLE = 1;
+  GAME_STATUS_RESERVED = 2;
+  GAME_STATUS_EOS = 3;
+}
+
+enum GameDownloadType {
+  GAME_DOWNLOAD_MODE_INVALID = 0;
+  GAME_DOWNLOAD_MODE_ARCHIVE = 1;
+  GAME_DOWNLOAD_MODE_SOPHON = 2;
+  GAME_DOWNLOAD_MODE_RAW = 3;
+  GAME_DOWNLOAD_MODE_MULTI_ARCHIVE = 5;
+}
+
+enum OperatingSystem {
+  OS_UNKNOWN = 0;
+  OS_MACOS = 1;
+  OS_LINUX = 2;
+  OS_WINDOWS = 3;
+}
+
+enum GameXxmiLoaderType {
+  GAME_XXMI_LOAD_INVALID = 0;
+  GAME_XXMI_LOAD_HOOK = 1;
+  GAME_XXMI_LOAD_INJECT = 2;
+}
+
+enum GameRegistryHive {
+  GAME_REGISTRY_HIVE_INVALID = 0;
+  GAME_REGISTRY_HIVE_CURRENT_USER = 1;
+  GAME_REGISTRY_HIVE_LOCAL_MACHINE = 2;
+  GAME_REGISTRY_HIVE_USERS_DEFAULT = 3;
+}
+
+enum GameRegistryValueType {
+  GAME_REGISTRY_VALUE_INVALID = 0;
+  GAME_REGISTRY_VALUE_STRING = 1;
+  GAME_REGISTRY_VALUE_EXPAND_STRING = 2;
+  GAME_REGISTRY_VALUE_MULTI_STRING = 3;
+  GAME_REGISTRY_VALUE_BINARY = 4;
+  GAME_REGISTRY_VALUE_DWORD = 5;
+  GAME_REGISTRY_VALUE_QWORD = 6;
+}
+
+enum GameLauncherAccountType {
+  GAME_LAUNCHER_ACCOUNT_UNKNOWN = 0;
+  GAME_LAUNCHER_ACCOUNT_HOYOVERSE = 1;
+  GAME_LAUNCHER_ACCOUNT_KUROGAMES_AKI = 2;
+  GAME_LAUNCHER_ACCOUNT_GRYPHLINE = 3;
+  GAME_LAUNCHER_ACCOUNT_YOSTAR = 4;
+  GAME_LAUNCHER_ACCOUNT_NETMARBLE = 5;
+  GAME_LAUNCHER_ACCOUNT_LEVEL_INFINITE = 6;
+  GAME_LAUNCHER_ACCOUNT_STOVE = 7;
+  GAME_LAUNCHER_ACCOUNT_PERFECT_WORLD = 8;
+  GAME_LAUNCHER_ACCOUNT_IDREAMSKY = 9;
+  GAME_LAUNCHER_ACCOUNT_TWINTAIL_AUTH = 10;
+  GAME_LAUNCHER_ACCOUNT_KUROGAMES_HARU = 11;
+}
+
+message GameManifest {
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+  GameStatusInfo status = 4;
+  GameDeveloperInfo developer_info = 5;
+  GameAssetInfo asset_info = 6;
+  GameDownloadInfo download_info = 7;
+  GamePathsInfo paths = 8;
+  repeated GameScenarioConfig scenario_config = 9;
+  repeated string special_launch_arguments = 10;
+  repeated string special_environment_variables = 11;
+  repeated GameGraphicsApiConfig graphics_api_config = 12;
+  repeated GameRunnerRecommendInfo runner_recommend_info = 13;
+  GameXxmiConfig xxmi_config = 14;
+  GameFeatureFlags feature_flags = 15;
+  repeated string winetricks_verbs = 16;
+  GameSteamInfo steam_info = 17;
+  repeated string proton_compat_verbs = 18;
+  repeated string keqing_unlock_options = 19;
+  GameUmuInfo umu_info = 20;
+  GameLauncherAccountType account_type = 21;
+  repeated GameActionStepConfig pre_install_steps = 22;
+  repeated GameActionStepConfig post_install_steps = 23;
+  repeated GameActionStepConfig pre_update_steps = 24;
+  repeated GameActionStepConfig post_update_steps = 25;
+  repeated GameActionStepConfig pre_repair_steps = 26;
+  repeated GameActionStepConfig post_repair_steps = 27;
+  repeated GameActionStepConfig pre_preload_steps = 28;
+  repeated GameActionStepConfig post_preload_steps = 29;
+  GameSuspendStartInfo suspend_start_info = 30;
+  GameVersionInfo preload = 31;
+  string latest_version = 32;
+  repeated GameVersionInfo version_list = 33;
+  repeated GameActionStepConfig runner_change_steps = 34;
+}
+
+message GameFeatureFlags {
+  optional bool xxmi = 1;
+  optional bool graphics_api = 2;
+  optional bool runner_recommendations = 3;
+  optional bool runner_recommends_required = 4;
+  optional bool scenario_config = 5;
+  optional bool winetricks_fixes = 6;
+  optional bool steam_importable = 7;
+  optional bool proton_compat_fixes = 8;
+  optional bool keqing_unlock = 9;
+  optional bool runner_recommends_minimum = 10;
+  optional bool disable_umu = 11;
+  optional bool enable_pre_install_steps = 12;
+  optional bool enable_post_install_steps = 13;
+  optional bool audio_package_picker = 14;
+  optional bool enable_pre_update_steps = 15;
+  optional bool enable_post_update_steps = 16;
+  optional bool enable_pre_repair_steps = 17;
+  optional bool enable_post_repair_steps = 18;
+  optional bool enable_pre_preload_steps = 19;
+  optional bool enable_post_preload_steps = 20;
+  optional bool multiple_scenarios_allowed = 21;
+  optional bool launcher_account_required = 22;
+  optional bool enable_preload = 23;
+  optional bool enable_repair = 24;
+  optional bool enable_patch = 25;
+  optional bool enable_suspend_start = 26;
+  optional bool enable_runner_change_steps = 27;
+}
+
+message GameUmuInfo {
+  string umu_id = 1;
+  string umu_store = 2;
+}
+
+message GameSteamInfo {
+  string appid_txt_path = 1;
+  string steamapi64_dll_path = 2;
+}
+
+message GameSuspendStartInfo {
+  string launch_target_path = 1;
+  string reparent_process_target_path = 2;
+  repeated string reparent_process_arguments = 3;
+}
+
+message GameXxmiConfig {
+  string mi_name = 1;
+  GameXxmiLoaderType loader_type = 2;
+}
+
+message GameScenarioConfig {
+  string name = 1;
+  string description = 2;
+  string id = 3;
+  string launch_arguments = 4;
+  bool default = 5;
+}
+
+message GameGraphicsApiConfig {
+  string display_name = 1;
+  string engine_argument = 2;
+}
+
+message GameRunnerRecommendInfo {
+  string runner_id = 1;
+  repeated string recommended_versions = 2;
+  OperatingSystem target_os = 3;
+}
+
+message GameDeveloperInfo {
+  string developer_name = 1;
+  string publisher_name = 2;
+  string developer_website_url = 3;
+  string publisher_website_url = 4;
+  string game_community_url = 5;
+  string developer_logo_url = 6;
+  string publisher_logo_url = 7;
+}
+
+message GameAssetInfo {
+  string game_icon_url = 1;
+  string game_hero_url = 2;
+  string game_background_url = 3;
+  string game_live_background_url = 4;
+}
+
+message GameDownloadInfo {
+  GameDownloadType download_mode = 1;
+  GameDownloadType patch_mode = 2;
+  GameDownloadType repair_mode = 3;
+  GameDownloadType preload_mode = 4;
+}
+
+message GamePathsInfo {
+  string main_executable = 1;
+  string screenshots_path = 2;
+  string engine_log_path = 3;
+  string engine_crash_dumps_path = 4;
+  repeated GamePathsVariant variants = 5;
+}
+
+message GamePathsVariant {
+  string key = 1;
+  GamePathsInfo paths = 2;
+}
+
+// How to update an install, checked against version_list[0]:
+//   installed == latest_version        nothing to do
+//   installed == a diff.from_version   apply that diff
+//   installed > max(diff.from_version) in game hotfix, nothing to do
+//   installed < min(diff.from_version) full download
+message GameVersionInfo {
+  string version = 1;
+  GamePackage game_package = 2;
+  repeated GameAudioPackage audio_package = 3;
+  string build_sequence = 4;
+  GameAssetInfo asset_info = 5;
+}
+
+message GameAudioPackage {
+  string language = 1;
+  GamePackage package = 2;
+}
+
+message GamePackage {
+  repeated GameFullPackage full = 1;
+  repeated GameDiffPackage diff = 2;
+  repeated GamePackageVariant variants = 3;
+}
+
+message GamePackageVariant {
+  string key = 1;
+  GamePackage game_package = 2;
+  repeated GameAudioPackage audio_package = 3;
+}
+
+message GameFullPackage {
+  string file_url = 1;
+  string file_hash = 2;
+  string compressed_size = 3;
+  string decompressed_size = 4;
+  string resource_base_url = 5;
+  repeated string scenarios = 6;
+}
+
+message GameDiffPackage {
+  string file_url = 1;
+  string file_hash = 2;
+  string compressed_size = 3;
+  string decompressed_size = 4;
+  string from_version = 5;
+  string resource_base_url = 6;
+  repeated string scenarios = 7;
+  string archive_password = 8;
+}
+
+// any path or entry holding * or ? is a glob, those are illegal in windows paths
+message GameActionStepConfig {
+  repeated OperatingSystem os_policy = 1;
+  oneof step {
+    GameExtractArchiveStep extract_archive = 2;
+    GameRunBinaryStep run_binary = 3;
+    GameReplaceContentsStep replace_contents = 4;
+    GameHexPatchStep hex_patch = 5;
+    GameWriteFileStep write_file = 6;
+    GameDeleteFileStep delete_file = 7;
+    GameRegistryAddStep registry_add = 8;
+    GameRegistryDeleteStep registry_delete = 9;
+    GameWindowsCatFileStep windows_cat_file = 10;
+  }
+}
+
+message GameExtractArchiveStep {
+  string archive_url = 1;
+  string save_as = 2;
+  repeated string entry_filter = 3;
+  string destination = 4;
+  string archive_hash = 5;
+}
+
+message GameRunBinaryStep {
+  string binary_url = 1;
+  string save_as = 2;
+  repeated string arguments = 3;
+  repeated string environment_variables = 4;
+  string binary_hash = 5;
+}
+
+message GameReplaceContentsStep {
+  string file_path = 1;
+  string find = 2;
+  string replace_with = 3;
+  bool regex = 4;
+}
+
+message GameHexPatchStep {
+  string file_path = 1;
+  string find_hex = 2;
+  string replace_hex = 3;
+  bool regex = 4;
+}
+
+// glob is invalid for file_path as its a path where to write a file
+message GameWriteFileStep {
+  string file_path = 1;
+  string content = 2;
+  bool append = 3;
+}
+
+message GameDeleteFileStep {
+  string file_path = 1;
+}
+
+message GameRegistryAddStep {
+  GameRegistryHive hive = 1;
+  string key_path = 2;
+  string value_name = 3;
+  GameRegistryValueType value_type = 4;
+  string value_data = 5;
+}
+
+// an empty value_name deletes the whole key at key_path
+message GameRegistryDeleteStep {
+  GameRegistryHive hive = 1;
+  string key_path = 2;
+  string value_name = 3;
+}
+
+message GameWindowsCatFileStep {
+  repeated string files = 1;
+  string catalog_name = 2;
+  string guid = 3;
+}

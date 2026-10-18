@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+import "GameManifest.proto";
+import "RunnerManifest.proto";
+
+option java_package = "app.twintaillauncher.mobius.proto";
+option java_outer_classname = "TwintailManifestProto";
+option java_multiple_files = true;
+
+enum ManifestType {
+  MANIFEST_TYPE_UNSPECIFIED = 0;
+  MANIFEST_TYPE_GAME = 1;
+  MANIFEST_TYPE_RUNNER = 2;
+  MANIFEST_TYPE_ADDON = 3;
+}
+
+message TwintailManifest {
+  int64 version = 1;
+  oneof manifest {
+    GameManifest game_manifest = 2;
+    RunnerManifest runner_manifest = 3;
+  }
+}
