@@ -99,6 +99,7 @@ message GameManifest {
   string latest_version = 32;
   repeated GameVersionInfo version_list = 33;
   repeated GameActionStepConfig runner_change_steps = 34;
+  GameDiscordInfo discord_info = 35;
 }
 
 message GameFeatureFlags {
@@ -129,6 +130,8 @@ message GameFeatureFlags {
   optional bool enable_patch = 25;
   optional bool enable_suspend_start = 26;
   optional bool enable_runner_change_steps = 27;
+  optional bool discord_rpc = 28;
+  optional bool discord_linking = 29;
 }
 
 message GameUmuInfo {
@@ -145,6 +148,12 @@ message GameSuspendStartInfo {
   string launch_target_path = 1;
   string reparent_process_target_path = 2;
   repeated string reparent_process_arguments = 3;
+}
+
+message GameDiscordInfo {
+  string detectable_client_id = 1;
+  string link_client_id = 2;
+  repeated string link_scopes = 3;
 }
 
 message GameXxmiConfig {

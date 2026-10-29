@@ -22,9 +22,13 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 public final class Api {
+    private static final Set<Integer> TRANSIENT_STATUSES = Set.of(403, 408, 425, 429);
+    private static final long MAX_RETRY_WAIT_MS = 30000;
+
     private final HttpClient client;
     private final int retries;
     private final long retryDelayMs;
@@ -122,12 +126,15 @@ public final class Api {
         HttpRequest request = builder.timeout(requestTimeout).method(method, body.isEmpty() ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
         RuntimeException last = null;
         for (int attempt = 1; attempt <= retries; attempt++) {
+            boolean retryable = true;
+            long wait = retryDelayMs << (attempt - 1);
             try {
                 HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-                if (response.statusCode() / 100 != 2) {
-                    throw new ApiException(name + ": http " + response.statusCode() + " from " + url);
-                }
-                return decode(response.body());
+                int status = response.statusCode();
+                if (status / 100 == 2) return decode(response.body());
+                last = new ApiException(name + ": http " + status + " from " + url);
+                retryable = status / 100 == 5 || TRANSIENT_STATUSES.contains(status);
+                wait = retryAfter(response, wait);
             } catch (IOException e) {
                 last = new ApiException(name + ": " + e.getMessage(), e);
             } catch (InterruptedException e) {
@@ -136,10 +143,21 @@ public final class Api {
             } catch (ApiException e) {
                 last = e;
             }
-            if (attempt < retries) sleep(retryDelayMs * attempt);
+            if (!retryable) throw last;
+            if (attempt < retries) sleep(wait);
         }
         assert last != null;
         throw last;
+    }
+
+    private static long retryAfter(HttpResponse<byte[]> response, long fallback) {
+        String header = response.headers().firstValue("Retry-After").orElse("").trim();
+        if (header.isEmpty()) return fallback;
+        try {
+            return Math.min(Long.parseLong(header) * 1000L, MAX_RETRY_WAIT_MS);
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 
     private static String decode(byte[] body) {
