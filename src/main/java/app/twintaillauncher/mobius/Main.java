@@ -311,15 +311,21 @@ public final class Main {
                 groups.computeIfAbsent(String.valueOf(entry.get(groupBy)), k -> new ArrayList<>()).add(entry);
             }
             Map<String, Object> groupTemplate = Yml.map(meta, "group");
+            String nameField = templateField(groupTemplate, "@name");
             for (Map.Entry<String, List<Map<String, Object>>> group : groups.entrySet()) {
                 List<Object> members = new ArrayList<>();
                 for (Map<String, Object> entry : group.getValue()) members.add(render(entryTemplate, entry));
 
+                boolean labelled = group.getValue().stream().anyMatch(member -> "global".equals(member.get("region")));
                 Map<String, Object> label = group.getValue().stream().filter(member -> "global".equals(member.get("region"))).findFirst().orElse(group.getValue().getFirst());
                 Map<String, Object> vars = new LinkedHashMap<>(label);
                 vars.put("key", group.getKey());
                 vars.put("members", members);
-                rendered.add(render(groupTemplate, vars));
+                Object groupNode = render(groupTemplate, vars);
+                if (merge && !labelled && nameField != null && groupNode instanceof Map<?, ?> map) {
+                    map.remove(nameField);
+                }
+                rendered.add(groupNode);
             }
         }
 
@@ -636,45 +642,64 @@ public final class Main {
             }
         }
 
-        List<Loaded> loaded = new ArrayList<>();
-        List<String> failed = new ArrayList<>();
+        Loaded[] results = new Loaded[ids.size()];
+        List<Integer> stragglers = new ArrayList<>();
         try (ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<Loaded>> futures = new ArrayList<>();
             for (int i = 0; i < ids.size(); i++) {
                 Map<String, Object> yml = ymls.get(i);
                 Map<String, Object> instance = instanceCfgs.get(i);
                 Path instanceOffline = offlines.get(i);
-                String name = Yml.string(instance, "id", "");
-                futures.add(pool.submit(() -> {
-                    Map<String, Object> http = Api.mergeHttp(Api.mergeHttp(config.http(), Yml.map(yml, "http")), Yml.map(instance, "http"));
-                    Map<String, Object> auth = Yml.map(instance, "auth").isEmpty() ? Yml.map(yml, "auth") : Yml.map(instance, "auth");
-
-                    Api api = new Api(http, auth, instanceOffline);
-                    Provider provider = Provider.load(config, yml, api, Yml.map(instance, "vars"), name);
-                    Loaded out = new Loaded(provider, provider.gameConfigs(config));
-                    if (save != null) {
-                        Path path = Path.of(save);
-                        api.dumpTo(name.isEmpty() ? path : path.resolve(name));
-                    }
-                    return out;
-                }));
+                futures.add(pool.submit(() -> loadOne(config, yml, instance, instanceOffline, save)));
             }
             for (int i = 0; i < futures.size(); i++) {
                 try {
-                    loaded.add(futures.get(i).get());
+                    results[i] = futures.get(i).get();
                 } catch (ExecutionException e) {
                     System.err.println("provider " + ids.get(i) + " failed: " + e.getCause().getMessage());
-                    failed.add(ids.get(i));
+                    stragglers.add(i);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
                 }
             }
         }
+
+        List<String> failed = new ArrayList<>();
+        for (int i : stragglers) {
+            try {
+                results[i] = loadOne(config, ymls.get(i), instanceCfgs.get(i), offlines.get(i), save);
+                System.err.println("provider " + ids.get(i) + " recovered on retry");
+            } catch (RuntimeException e) {
+                System.err.println("provider " + ids.get(i) + " failed on retry: " + e.getMessage());
+                failed.add(ids.get(i));
+            }
+        }
+
         if (!matched) {
             throw new Config.ConfigException("no provider matched" + (only == null ? "" : " --provider " + only) + (repoFilter == null ? "" : " --repository " + repoFilter));
         }
+
+        List<Loaded> loaded = new ArrayList<>();
+        for (Loaded result : results) {
+            if (result != null) loaded.add(result);
+        }
         return new Loadout(loaded, failed);
+    }
+
+    private static Loaded loadOne(Config config, Map<String, Object> yml, Map<String, Object> instance, Path offline, String save) {
+        String name = Yml.string(instance, "id", "");
+        Map<String, Object> http = Api.mergeHttp(Api.mergeHttp(config.http(), Yml.map(yml, "http")), Yml.map(instance, "http"));
+        Map<String, Object> auth = Yml.map(instance, "auth").isEmpty() ? Yml.map(yml, "auth") : Yml.map(instance, "auth");
+
+        Api api = new Api(http, auth, offline);
+        Provider provider = Provider.load(config, yml, api, Yml.map(instance, "vars"), name);
+        Loaded out = new Loaded(provider, provider.gameConfigs(config));
+        if (save != null) {
+            Path path = Path.of(save);
+            api.dumpTo(name.isEmpty() ? path : path.resolve(name));
+        }
+        return out;
     }
 
     public record Loadout(List<Loaded> loaded, List<String> failed) { }
