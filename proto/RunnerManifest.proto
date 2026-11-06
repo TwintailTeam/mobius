@@ -68,4 +68,5 @@ message RunnerFeatureFlags {
   optional bool optiscaler_config = 20;
   optional bool optiscaler_dll_name = 21;
   optional bool fsr3_upgrade = 22;
+  optional bool dxvk_gplasync = 23;
 }
