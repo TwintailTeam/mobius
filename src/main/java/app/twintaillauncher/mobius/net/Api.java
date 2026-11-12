@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +29,7 @@ import java.util.zip.GZIPInputStream;
 public final class Api {
     private static final Set<Integer> TRANSIENT_STATUSES = Set.of(403, 408, 425, 429);
     private static final long MAX_RETRY_WAIT_MS = 30000;
+    private static final int MAX_REASON_CHARS = 300;
 
     private final HttpClient client;
     private final int retries;
@@ -132,9 +134,11 @@ public final class Api {
                 HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
                 int status = response.statusCode();
                 if (status / 100 == 2) return decode(response.body());
-                last = new ApiException(name + ": http " + status + " from " + url);
+                last = new ApiException(name + ": http " + status + " from " + url + reason(response));
                 retryable = status / 100 == 5 || TRANSIENT_STATUSES.contains(status);
                 wait = retryAfter(response, wait);
+            } catch (HttpConnectTimeoutException e) {
+                throw new ApiException(name + ": " + e.getMessage() + " (" + url + ")", e);
             } catch (IOException e) {
                 last = new ApiException(name + ": " + e.getMessage(), e);
             } catch (InterruptedException e) {
@@ -148,6 +152,13 @@ public final class Api {
         }
         assert last != null;
         throw last;
+    }
+
+    private static String reason(HttpResponse<byte[]> response) {
+        String server = response.headers().firstValue("Server").orElse("");
+        String body = new String(response.body(), StandardCharsets.UTF_8).replaceAll("\\s+", " ").trim();
+        if (body.length() > MAX_REASON_CHARS) body = body.substring(0, MAX_REASON_CHARS) + "...";
+        return (server.isEmpty() ? "" : " [server " + server + "]") + (body.isEmpty() ? "" : ": " + body);
     }
 
     private static long retryAfter(HttpResponse<byte[]> response, long fallback) {
