@@ -285,11 +285,11 @@ public final class Main {
             return 1;
         }
         System.out.printf("%d manifests, %d -> %d bytes (%.1f%% of protobuf)%n", written, raw, packed, 100.0 * packed / raw);
-        boolean merge = !bizFilter.isEmpty() || !failed.isEmpty() || flags.containsKey("provider");
+        boolean merge = !bizFilter.isEmpty() || !failed.isEmpty() || !all.skipped().isEmpty() || flags.containsKey("provider");
         for (Map.Entry<String, List<Map<String, Object>>> repo : index.entrySet()) {
             writeRepository(Config.load(), repo.getKey(), outDir.resolve(repo.getKey()), repo.getValue(), merge);
         }
-        return report(new Loadout(all.loaded(), failed), 0);
+        return report(new Loadout(all.loaded(), failed, all.skipped()), 0);
     }
 
     private static void writeRepository(Config config, String id, Path outDir, List<Map<String, Object>> entries, boolean merge) throws IOException {
@@ -619,6 +619,7 @@ public final class Main {
         List<Map<String, Object>> ymls = new ArrayList<>();
         List<Map<String, Object>> instanceCfgs = new ArrayList<>();
         List<Path> offlines = new ArrayList<>();
+        List<String> skipped = new ArrayList<>();
         boolean matched = false;
 
         for (Map<String, Object> yml : config.providers()) {
@@ -634,6 +635,11 @@ public final class Main {
                 String id = name.isEmpty() ? base : base + "/" + name;
                 if (only != null && !only.equals(id) && !only.equals(base)) continue;
                 matched = true;
+                if (!Yml.bool(instance, "enabled", true)) {
+                    System.err.println("provider " + id + " disabled, skipped");
+                    skipped.add(id);
+                    continue;
+                }
 
                 ids.add(id);
                 ymls.add(yml);
@@ -684,7 +690,7 @@ public final class Main {
         for (Loaded result : results) {
             if (result != null) loaded.add(result);
         }
-        return new Loadout(loaded, failed);
+        return new Loadout(loaded, failed, skipped);
     }
 
     private static Loaded loadOne(Config config, Map<String, Object> yml, Map<String, Object> instance, Path offline, String save) {
@@ -702,7 +708,7 @@ public final class Main {
         return out;
     }
 
-    public record Loadout(List<Loaded> loaded, List<String> failed) { }
+    public record Loadout(List<Loaded> loaded, List<String> failed, List<String> skipped) { }
 
     private static Gson gson(Map<String, String> flags) {
         GsonBuilder builder = new GsonBuilder().serializeNulls();

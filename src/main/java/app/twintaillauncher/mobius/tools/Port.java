@@ -137,7 +137,7 @@ public final class Port {
         }
         Main.dumpResponses(all, flags);
         if (written == 0) System.err.println("nothing ported");
-        return Main.report(new Main.Loadout(all.loaded(), failed), written == 0 ? 1 : 0);
+        return Main.report(new Main.Loadout(all.loaded(), failed, all.skipped()), written == 0 ? 1 : 0);
     }
 
     static boolean sophonWalk(Provider provider, Provider.Game game, Main.Loaded loaded, Descriptors.Descriptor descriptor, Map<String, Object> root, Map<String, Object> schema, Path repoDir, Path from, int level, Map<String, String> flags) throws IOException {
