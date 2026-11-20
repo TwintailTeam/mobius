@@ -26,6 +26,12 @@ enum OperatingSystem {
   OS_WINDOWS = 3;
 }
 
+enum Architecture {
+  ARCH_UNKNOWN = 0;
+  ARCH_X86_64 = 1;
+  ARCH_AARCH64 = 2;
+}
+
 enum GameXxmiLoaderType {
   GAME_XXMI_LOAD_INVALID = 0;
   GAME_XXMI_LOAD_HOOK = 1;
@@ -178,6 +184,7 @@ message GameRunnerRecommendInfo {
   string runner_id = 1;
   repeated string recommended_versions = 2;
   OperatingSystem target_os = 3;
+  Architecture target_arch = 4;
 }
 
 message GameDeveloperInfo {
@@ -270,6 +277,7 @@ message GameDiffPackage {
 // any path or entry holding * or ? is a glob, those are illegal in windows paths
 message GameActionStepConfig {
   repeated OperatingSystem os_policy = 1;
+  repeated Architecture arch_policy = 11;
   oneof step {
     GameExtractArchiveStep extract_archive = 2;
     GameRunBinaryStep run_binary = 3;
